@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 ## Usage
 Runs airodump-ng to start capturing traffic associated with the access point. <br />
-Then it parses the airodump-ng log file every 5 minutes and sends 5 <br \>
+Then it parses the airodump-ng log file every 5 minutes and sends 5 <br />
 deauthentification packet clusters with aireplay-ng from every station that <br />
 has been associated with the access point. Then it renames the capture file, <br />
 creates a Hashcat v3.6+ file, and removes all other log files. <br />
