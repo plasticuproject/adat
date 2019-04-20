@@ -17,4 +17,4 @@ deauthentification packet clusters with aireplay-ng from every station that <br 
 has been associated with the access point. Then it renames the capture file, <br />
 creates a Hashcat v3.6+ file, and removes all other log files. <br />
 <br />
-![HELP](images/help.png)
+![HELP](images/help_screenshot.png)
