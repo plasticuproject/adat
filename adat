@@ -46,7 +46,7 @@ def start_dump():
     parser = argparse.ArgumentParser(description=banner())
     parser.add_argument('channel', type=str, metavar='Channel', help='Channel number the AP is broadcasting on.')
     parser.add_argument('essid', type=str, metavar='ESSID', help='ESSID name of AP to attack.')
-    parser.add_argument('delay', type=int, metavar='Attack_Delay', help='Time in minutes between deauth attacks (Default is 5).', default=5)
+    parser.add_argument('delay', type=int, metavar='Attack_Delay', nargs='?', const=5, help='Time in minutes between deauth attacks (Default is 5).', default=5)
     parser.add_argument('interface', type=str, metavar='Interface', help='Wireless interface to be used.')
     args = parser.parse_args()
     channel = args.channel
