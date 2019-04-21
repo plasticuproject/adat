@@ -42,6 +42,7 @@ def banner():
 def start_dump():
 
     # runs airodump-ng to start capturing traffic associated with the access point
+    
     global essid, interface, attack_delay
     parser = argparse.ArgumentParser(description=banner())
     parser.add_argument('channel', type=str, metavar='Channel', help='Channel number the AP is broadcasting on.')
@@ -62,9 +63,10 @@ def deauth():
 
     # parses the airodump-ng log file every n minutes and sends 5 deauthentification packet clusters with
     # aireplay-ng from every station that has been associated with the access point
-    time.sleep(15)
+
     try:
         file = 'dump_' + essid + '-01.csv'
+        time.sleep(10)
         while True:
             mac_list = []
             with open(file, 'r') as mac_file:
@@ -89,6 +91,7 @@ def deauth():
 def clean():
 
     # renames capture file, creates a Hashcat v3.6+ file, and removes all other log files
+    
     try:
         subprocess.call(['cp', dirPath + 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
         subprocess.call(['aircrack-ng', '-j', dirPath + essid, 'dump_' + essid + '-01.cap'])
